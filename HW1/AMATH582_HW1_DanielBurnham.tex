@@ -42,7 +42,7 @@
 
 % Title content
 \title{AMATH 582 Homework 1}
-\author{Your Name}
+\author{Daniel Burnham}
 \date{January 24, 2020}
 
 \begin{document}
@@ -51,37 +51,42 @@
 
 % Abstract
 \begin{abstract}
-    Add your abstract here.
+The work presented here is motivated by material covered in AMATH 582 Computational Methods For Data Analysis regarding Fourier transform. The premise of the exercise is that a dog swallowed a marble and the veterinarian collected ultrasound measurements of the marble in the intestines. However, the data needs to be filtered and subsequently analyzed in order to determine where to focus an intense acoustic wave to break apart the marble. Averaging of the data transformed in the frequency domain using the Fourier transform will be used to identify the marble frequency signature. This signature will then be used to locate the marble at each point in time within the data by informing the location of a filter in the frequency domain. After this filtering the marble trajectory will be made clear, and the acoustic wave target can be acquired.
 \end{abstract}
 
 % Introduction and Overview
 \section{Introduction and Overview}
-Add your introduction and overview here.
+The data analysis efforts will be divided into three distinct phases. First, the center frequency corresponding to the marble in the Fourier transformed data will be identified. Second, the center frequency will be used to filter the Fourier transformed data for each measurement instance. Third, this filtered data will be inverse transformed to yield the spatial location of the marble for each moment in time.
 
-% Example Subsection
-\subsection{Subsection Title}
-This is a subsection.
+% data averaging and frequency signature Subsection
+\subsection{Marble Frequency Signature}
+The frequency signature of the marble will be isolated from the spatial data by first transforming the data into the frequency domain and then averaging the measurements together to diminish noise.
 
-% Example Subsubsection
-\subsubsection{Subsubsection Title}
-This is a subsubsection.
+% data filtering subsection
+\subsection{Data Filtering}
+The center frequency of the marble will be used to position a filter in the frequency domain to isolate the marble signature for each measurement. This filtered frequency spectrum can then be inverse transformed to indicate the spatial location of the marble.
+
+% data filtering subsection
+\subsection{Marble Location}
+The maximum value of the filtered and subsequently inverse transformed data for each measurement will indicate where the marble is located in space. The visualization of this location for each measurement instance will illustrate the trajectory of the marble in time and will allow for the acoustic wave to be targeted to the final marble position.
 
 %  Theoretical Background
 \section{Theoretical Background}
-Add your theoretical background here. Some example text: As we learned from our textbook \cite{kutz_2013}, Fourier introduced the concept of representing a given function $f(x)$ by a trigonometric series of sines and cosines:
+The main concept explored with this work is the Fourier transform. The Fourier transform is an extension of the Fourier series which represents a given function $f(x)$ as sums of cosines and sines. 
 \begin{equation}
     f(x) = \frac{a_0}{2} + \sum_{i=1}^\infty \left(a_n\cos{nx} + b_n\sin{nx}\right) \quad x \in (-\pi,\pi].
     \label{eqn:fourierseries}
 \end{equation}
-You can reference numbered equations, figures, tables, algorithms, and code like this: Equation~\ref{eqn:fourierseries}, etc.
+This operation is especially useful in the context of signal analysis as it represents signal component frequencies for selective filtering.
+
+To implement the Fourier transform computationally, the fft(x) function in MATLAB will be used. There are certain properties of the fft(x) function that need to be considered. First, the function is only "fast" when passed data that is $2^{n}$ discretized. Second, the algorithm shifts the data so that $x \in [0, L] \rightarrow [−L, 0]$ and $x \in [−L, 0] \rightarrow [0, L]$. Third, a $2\pi$  periodic domain is assumed.
 
 % Algorithm Implementation and Development
 \section{Algorithm Implementation and Development}
-Add your algorithm implementation and development here. See Algorithm~\ref{alg:example} for how to include an algorithm in your document. This is how to make an \textit{ordered} list:
+The main steps of the algorim are as follows: 
 \begin{enumerate}
-    \item Fluffy swallowed a marble.
-    \item I took Fluffy to the vet.
-    \item They took an ultrasound of Fluffy's intestines.
+    \item Average frequency spectrum of each measurement instance to identify center frequency of marble.
+    \item Filter data in the frequency domain around marble frequency signature. Inverse transform data to find marble trajectory and final position.
 \end{enumerate}
 
 \begin{algorithm}
@@ -89,82 +94,77 @@ Add your algorithm implementation and development here. See Algorithm~\ref{alg:e
     \STATE{Import data from \texttt{Testdata.mat}}
     \FOR{$j = 1:20$}
         \STATE{Extract measurement $j$ from \texttt{Undata}}
-        \STATE{Do something useful}
+        \STATE{Apply Fourier transform}
+        \STATE{Add to sum of transformed data}
     \ENDFOR
-    \IF{$i\geq 5$} 
-        \STATE{$i\gets i-1$}
-    \ELSE
-        \IF{$i\leq 3$}
-            \STATE{$i\gets i+2$}
-        \ENDIF
-    \ENDIF 
+    \STATE{Divide sum of transformed data by number of measurements}
+    \STATE{Find maximum value of the average transformed data}
+    
 \end{algorithmic}
-\caption{Example Algorithm}
-\label{alg:example}
+\caption{Find center frequency}
+\label{alg:Marble Frequency}
+\end{algorithm}
+
+\begin{algorithm}
+\begin{algorithmic}
+    \STATE{Create filter around marble frequency}
+    \FOR{$j = 1:20$}
+        \STATE{Apply filter to each measurement}
+        \STATE{Apply inverse transform}
+        \STATE{Find maximum value corresponding to the marble position at that time step.}
+    \ENDFOR
+    \STATE{Visualize trajectory}
+    \STATE{Find final marble position}
+\end{algorithmic}
+\caption{Filter Data}
+\label{alg:Filter Data}
 \end{algorithm}
 
 % Computational Results
 \section{Computational Results}
-Add your computational results here. See Table~\ref{tab:mascots} for how to include a table in your document. See Figure~\ref{fig:dubs} for how to include figures in your document.
-
-\begin{table}
-    \centering
-    \begin{tabular}{rll}
-    & Name & Years \\
-    \hline
-    1 & Frosty & 1922-1930  \\
-    2 & Frosty II & 1930-1936 \\
-    3 & Wasky & 1946 \\
-    4 & Wasky II & 1947 \\
-    5 & Ski & 1954 \\
-    6 & Denali & 1958 \\
-    7 & King Chinook & 1959-1968\\
-    8 & Regent Denali & 1969 \\
-    9 & Sundodger Denali & 1981-1992 \\
-    10 & King Redoubt & 1992-1998 \\
-    11 & Prince Redoubt & 1998 \\
-    12 & Spirit & 1999-2008 \\
-    13 & Dubs I & 2009-2018 \\
-    14 & Dubs II & 2018-Present
-    \end{tabular}
-    \caption{UW mascots as described in \cite{washington_huskies}.}
-    \label{tab:mascots}
-\end{table}
+See Figure~\ref{fig:marbleSignal} for the result of averaging the Fourier transformed measurements. See Figure~\ref{fig:marbleTrajectory} for the determined marble trajectory. The final marble position was determined to be $(-5.6250,       4.2188,   -6.0938)$ in the spatial domain.
 
 % begin{figure}[tb] % t = top, b = bottom, etc.
 \begin{figure}
     \centering
-    \includegraphics[width=0.5\linewidth]{dubs.jpg}
-    \caption{Here is a picture of Dubs \cite{webeck_2018}. Dubs did not swallow a marble.}
-    \label{fig:dubs}
+    \includegraphics[width=1.0\linewidth]{marbleSignal.jpg}
+    \caption{This is an isosurface plot (see Appendix~\ref{itemize:functions}) of the marble central frequency after averaging measurements in the frequency domain. The frequency signature of the marble is $(1.8850, -1.0472, 0)$}
+    \label{fig:marbleSignal}
+\end{figure}
+
+% begin{figure}[tb] % t = top, b = bottom, etc.
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\linewidth]{marbleTrajectory.jpg}
+    \caption{This is a 3D plot of the marble trajectory after filtering the data around the central frequency and using the inverse transform. The final marble position is $(-5.6250,4.2188,-6.0938)$ }
+    \label{fig:marbleTrajectory}
 \end{figure}
 
 % Summary and Conclusions
 \section{Summary and Conclusions}
-Add your summary and conclusions here.
-
-% References
-\printbibliography
+The averaging of the transformed ultrasound measurements successfully diminished the noise in the signal and allowed for the marble frequency signature to be identified. Inverse transformation of the data filtered around this frequency resulted in a spiraling marble trajectory.
 
 % Appendices
 \begin{appendices}
 
 % MATLAB Functions
 \section{MATLAB Functions}
-Add your important MATLAB functions here with a brief implementation explanation. This is how to make an \textbf{unordered} list:
 \begin{itemize}
-    \item \texttt{y = linspace(x1,x2,n)} returns a row vector of \texttt{n} evenly spaced points between \texttt{x1} and \texttt{x2}. 
-    \item \texttt{[X,Y] = meshgrid(x,y)} returns 2-D grid coordinates based on the coordinates contained in the vectors \texttt{x} and \texttt{y}. \text{X} is a matrix where each row is a copy of \texttt{x}, and \texttt{Y} is a matrix where each column is a copy of \texttt{y}. The grid represented by the coordinates \texttt{X} and \texttt{Y} has \texttt{length(y)} rows and \texttt{length(x)} columns.  
+    \item \texttt{Y = fftn(X)} returns the multidimensional Fourier transform of an N-D array using a fast Fourier transform algorithm. The N-D transform is equivalent to computing the 1-D transform along each dimension of X. The output Y is the same size as X.
+    \item \texttt{Y = fftshift(X)} rearranges a Fourier transform X by shifting the zero-frequency component to the center of the array.
+    \item \texttt{X = ifftn(Y)} returns the multidimensional discrete inverse Fourier transform of an N-D array using a fast Fourier transform algorithm. The N-D inverse transform is equivalent to computing the 1-D inverse transform along each dimension of Y. The output X is the same size as Y.
+    \item \texttt{[row,col] = ind2sub(sz,ind)} returns the arrays row and col containing the equivalent row and column subscripts corresponding to the linear indices ind for a matrix of size sz. Here sz is a vector with two elements, where sz(1) specifies the number of rows and sz(2) specifies the number of columns.
+    \item \texttt{fv = isosurface(X,Y,Z,V,isovalue)} computes isosurface data from the volume data V at the isosurface value specified in isovalue. That is, the isosurface connects points that have the specified value much the way contour lines connect points of equal elevation.
+    \item \texttt{[X,Y] = meshgrid(x,y)} returns 2-D grid coordinates based on the coordinates contained in the vectors \texttt{x} and \texttt{y}. \text{X} is a matrix where each row is a copy of \texttt{x}, and \texttt{Y} is a matrix where each column is a copy of \texttt{y}. The grid represented by the coordinates \texttt{X} and \texttt{Y} has \texttt{length(y)} rows and \texttt{length(x)} columns. 
+\label{itemize:functions}
 \end{itemize}
 
 % MATLAB Codes
 \section{MATLAB Code}
-Add your MATLAB code here. This section will not be included in your page limit of six pages.
-
 \begin{listing}[h]
-\inputminted{matlab}{example.m}
-\caption{Example code from external file.}
-\label{listing:examplecode}
+\inputminted{matlab}{HW1_DanielBurnham.m}
+\caption{MATLAB code from external file used to generate the results presented here.}
+\label{listing:HW1code}
 \end{listing}
 
 \end{appendices}
