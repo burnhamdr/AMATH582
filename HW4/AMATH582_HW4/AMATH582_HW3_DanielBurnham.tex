@@ -1,0 +1,399 @@
+\documentclass{article}
+
+% If you're new to LaTeX, here's some short tutorials:
+% https://www.overleaf.com/learn/latex/Learn_LaTeX_in_30_minutes
+% https://en.wikibooks.org/wiki/LaTeX/Basics
+
+% Formatting
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage[titletoc,title]{appendix}
+
+
+% Math
+% https://www.overleaf.com/learn/latex/Mathematical_expressions
+% https://en.wikibooks.org/wiki/LaTeX/Mathematics
+\usepackage{amsmath,amsfonts,amssymb,mathtools}
+
+% Images
+% https://www.overleaf.com/learn/latex/Inserting_Images
+% https://en.wikibooks.org/wiki/LaTeX/Floats,_Figures_and_Captions
+\usepackage{graphicx,float}
+\usepackage{pdfpages}
+\usepackage{subcaption}
+
+% Tables
+% https://www.overleaf.com/learn/latex/Tables
+% https://en.wikibooks.org/wiki/LaTeX/Tables
+
+% Algorithms
+% https://www.overleaf.com/learn/latex/algorithms
+% https://en.wikibooks.org/wiki/LaTeX/Algorithms
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{algorithmic}
+
+% Code syntax highlighting
+% https://www.overleaf.com/learn/latex/Code_Highlighting_with_minted
+\usepackage{minted}
+\usemintedstyle{borland}
+
+% References
+% https://www.overleaf.com/learn/latex/Bibliography_management_in_LaTeX
+% https://en.wikibooks.org/wiki/LaTeX/Bibliography_Management
+\usepackage[backend=biber, style=authoryear]{biblatex}
+\addbibresource{myBibliography.bib}
+
+% Title content
+\title{AMATH 582 Homework 4}
+\author{Daniel Burnham (https://github.com/burnhamdr)}
+\date{March 6, 2020}
+
+\begin{document}
+
+\maketitle
+
+% Abstract
+\begin{abstract}
+The work presented here is motivated by material covered in AMATH 582 Computational Methods For Data Analysis regarding the applications of Singular Value Decomposition (SVD) and classification algorithms. This report will discuss these topics in two sections. The first secion will report on application of SVD to a data set of human faces. SVD is a linear algebra matrix factorization method that represents how the matrix of interest stretches/compresses and rotates a given set of vectors. The SVD is a powerful tool because the constitutive components of its factorization allow for the subsequent projection of a matrix onto low-dimensional representations. In the problem addressed here this is used to determine the rank (dimensionality) of a data set of human faces. The results demonstrate that faces can be sufficiently represented with low rank approximations when the face images are cropped in a standardized manner. In applying SVD to uncropped faces the dimensionality reduction is less effective in creating a low rank approximation of individual faces. The second section will report on the implementation of various classification algorithms for music artist and genre discrimination tasks. Both time domain and frequency spectrum music data will be investigated as data substrates for classification algorithms in the contexts of artist discrimination and genre detection. Linear Discriminant Analysis, Logistic Regression, and K-nearest Neighbors classifiers were utilized for these tasks. The work in presented in the two sections of this report describes fundamental strategies to address modern data science problems.
+\end{abstract}
+
+% Introduction and Overview
+\section{Introduction and Overview}
+The topics explored here are discussed in two sections. The first section involves the analysis of both cropped and uncropped face image data using SVD. The second section involves music artist and genre classification algorithms.
+
+\subsection{SVD Face Data Analysis}
+Two data sets were analyzed with SVD: cropped face images, and uncropped face images. SVD analysis was performed on both data sets of these data sets to investigate how many modes are necessary for good image reconstruction (i.e. determine the rank of the face space). Differences in the singular value spectrum between the two data sets were subsequently identified and are discussed further in the Computational Results section of this report.
+
+\subsection{Music Classification}
+In keeping with the theme of data feature extraction, characteristics of music data are leveraged to classify genres and artists in this part of the report. Music styles are easily recognizable to the human ear, which raises the question of how are these distinctions drawn? The objective of the work in this section of the report is to to implement computational algorithms that capably classify music pieces based on a 5 second sample. This objective was pursued in the context of three specific tasks:
+
+\begin{enumerate}
+    \item (test 1) Band Classification: Three different bands were considered: Flume, Snoh Aalegra, and Tame Impala. Flume is a future base electronic music producer, Snoh Aalegra is a R\&B vocalist, and Tame Impala is a neo-psychadelic rock/pop artist. By taking 5-second clips from a variety of each of these artist's music, statistical testing algorithms were implemented with the objective being to seek methods capable of accurately identifying ”new” 5-second clips of music from the three chosen bands.
+    \item (test 2) Same Genre Band Classification: The above experiment was repeated, but with three bands from within the same genre. The genre chosen was jazz of the early to mid 1900s. The artists chosen were: Louis Armstrong, Miles Davis, Duke Ellington, and John Coltrane. Choosing these artists of the same genre was in an effort to test the abilities of classification algorithms to separate music into artist specific classes.
+    \item (test 3) Genre Classification: Expanding upon the results of the first two tests, genre classification was then pursued. 5 second music clips were again compiled from genres of jazz, rock, classical, and electronic. The training sets were composed of various bands and artists within each genre.
+\end{enumerate}
+Each of these test exercises contributed to illustrating the ability of computational methods to distinguish characteristics of musical style. Understanding these methods perhaps can shed light on possible methods used by the brain for similar tasks.
+
+
+%  Theoretical Background
+\section{Theoretical Background}
+\subsection{Singular Value Decomposition (SVD)}\label{svdTheory}
+SVD is a linear algebra method for factorization of a matrix into a number of constitutive components. It is rooted in the observation that during matrix vector multiplication of a vector $\mathbf{x}$ by a matrix $\mathbf{A}$ the resulting vector $\mathbf{y}$ has a new magnitude and direction. This transformation of the vector $\mathbf{x}$ by a matrix $\mathbf{A}$ implies that perhaps the action of matrix $\mathbf{A}$ can be replicated through component matrices that perform the same magnitude and direction manipulations. Furthermore, it would be beneficial if these components possessed properties that made them easy to work with, such as orthogonality and diagonality. The SVD factorization of the matrix $\mathbf{A}$ achieves these goals by expanding this observation of vector transformation under multiplication by a matrix to $\mathbb{R}^{m}$. SVD does this by building from the observation that the image of a unit sphere under any m$\times$n matrix is a hyperellipse. Following from this, one can represent this transformation as $\mathbf{A}\mathbf{v}_{j} = \sigma_{j}\mathbf{u}_{j}$ for $1\leq j\leq n$. Where $\mathbf{v}_{j}$ are the vectors of the unit sphere transformed by $\mathbf{A}$, and $\sigma_{j}\mathbf{u}_{j}$ are the resulting transformations representing the the semiaxes of the hyperellipse. Rearranging this equation allows for the SVD factorization of $\mathbf{A}$ to be written as follows (\cite{kutz_2013}):
+\begin{equation}\label{eq:svd}
+\mathbf{A}= \mathbf{U}\boldsymbol{\Sigma} \mathbf{V}^*
+\end{equation}
+In this form, $\mathbf{U}$ is unitary and contains the vectors $\mathbf{u}_{j}$ indicating the directions of the transformed hyperellipse semiaxes, $\boldsymbol{\Sigma}$ is diagonal and contains the scaling values corresponding to these semiaxes, and $\mathbf{V}^{*}$ is the Hermitian transpose of $\mathbf{V}$ which contains the orthonormal basis of the vectors that are transformed under $\mathbf{A}$.
+
+It is worth noting that it can be proved that every matrix $\mathbf{A}\in\mathbb{C}^{m\times n}$ has a singular value decomposition and the singular values are uniquely determined (\cite{kutz_2013}). Additionally, if the matrix $\mathbf{A}$ is square, the singular vectors $\mathbf{u}_{j}$ and $\mathbf{v}_{j}$ are also uniquely determined up to complex signs (\cite{kutz_2013}). This is significant because it allows for every $\mathbf{A}\in\mathbb{C}^{m\times n}$ to be factorized by SVD and subsequently represented with lower rank matrix approximations. This will be useful in the context of the face image data set explored here as it represents a way of reducing the dimensionality of the face feature space.
+
+\subsection{Frequency Analysis}
+In the analysis of the music file data both the frequency spectrum of the audio signals are computed prior to implementation of classification methods. The Discrete Fourier Transform (DFT) can be utilized for this purpose when working with sets of data interpreted as discrete points. The foundation of DFT is the observation that a given function can be represented as a sum of $\sin$ and $\cos$ functions in the set $\{\sin(kx),\cos(kx)\}_{k=0}^\infty$. This representation is known as a Fourier Series:
+\begin{equation}\label{eq:fs}
+	f(x) = a_0 + \sum^{\infty}_{k=1}a_k\cos(kx)+b_k\sin(kx).
+\end{equation} 
+The coefficients $a_{k}$ and $b_{k}$ represent how similar the represented function $f$ is to waves with frequencies proportional to $k$. This transform thus maps the function, or the data, to frequency components. When applying the DFT to arrays of values, like sound wave amplitude data across time, we obtain a discrete set of frequency components. To apply DFT for the computational purposes of this work, the Fast Fourier Transform (FFT) is used. Extracting the frequency content for analysis instead of working with the raw sound wave data affords us the opportunity to filter out frequency components following SVD dimensionality reduction if the computational load of classifying the data set is overly burdensome.
+
+\subsection{Classification Methods}
+\subsubsection{Linear Discriminant Analysis}
+The goal of Linear Discriminant Analysis (LDA) is to find the best projection of the data that maximize class separation (see Figure~\ref{fig:lda}). This is achieved by mathematically constructing the optimal projection basis which separates the data (\cite{kutz_2013}). In the case of classification of two distinct classes with LDA, a projection w is constructed as:
+\begin{equation}\label{eq:pb}
+\mathbf{w} = \operatorname*{arg}\operatorname*{max}_\mathbf{w} \frac{\mathbf{w}^{T}\mathbf{S}_{B}\mathbf{w}}{\mathbf{w}^{T}\mathbf{S}_{W}\mathbf{w}}
+\end{equation}
+
+Where $\mathbf{S}_{B}$ and $\mathbf{S}_{W}$ are referred to as the scatter matrices for inter-class ($\mathbf{S}_{B}$) and intra-class ($\mathbf{S}_{W}$) data are mathematically derived as:
+
+\begin{equation}\label{eq:scat}
+\begin{aligned}
+&\mathbf{S}_{B} = (\mu_{2} - \mu_{1})(\mu_{2} - \mu_{1})^{T}
+&\mathbf{S}_{W} =\sum_{j=1}^{2}\sum_{\mathbf{x}}^{ }(\mathbf{x} - \mu_{j})(\mathbf{x} - \mu_{j})^{T}
+\end{aligned}
+\end{equation}
+
+\begin{figure}[b]
+    \centering
+    \includegraphics[width=0.4\linewidth]{Figures/LDA.png}
+    \caption{Two-class LDA task where an appropriate projection basis (b) is shown versus a poor performing projection bases (a). (\cite{kutz_2013})}
+    \label{fig:lda}
+\end{figure}
+
+The $\mu$ terms are arrays of the average value for each class. The scatter matrices capture the variance within each of the data classes as well as the variance of the difference in the means between classes. From these scatter matrices Equation~\ref{eq:pb} can be solved by way of solving the eigenvalue problem
+
+\begin{equation}\label{eq:evp}
+\mathbf{S}_{B} = \lambda\mathbf{S}_{W}\mathbf{w}
+\end{equation}
+
+The eigen vector of the maximum eigenvalue calculated from Equation~\ref{eq:evp} is the projection basis for LDA to maximally separate the two classes.
+
+\subsubsection{Logistic Regression}
+Logistic Regression is a widely used method for classification of a dichotomized output variable Y, and works by attempting to model the conditional probability of Y taking on a particular value (i.e. $Pr(Y = 1|X = x)$) as a function of the inputs. A problem in using simple linear regression for this model is that the modelled probability must be between 0 and 1, and a linear function is unbounded. Also it is common to confront systems where the relationship between the conditional probability and the inputs is not linear. The idea behind logistic regression is to instead let the log of the probability be a linear function of of the inputs. By performing a logistic transformation of the log probability the model becomes bounded between 0 and 1. The model is thus given by Equation~\ref{eq:lr} where $x$ indicates the predictors and $\beta$ the model parameters (\cite{Shalizi2012AdvancedDA}).
+
+\begin{equation}\label{eq:lr}
+log\left (  \frac{p(x))}{1 - p(x))}\right ) = \beta_{0} + x\beta
+\end{equation}
+
+The classification in a two class case will occur for one class when $p \geq 0.5$ and the other class when $p < 0.5$. To predict classes instead of probabilities, maximum likelihood estimation is used to estimate the parameters of a probability distribution by maximizing a likelihood function. In this case the log likelihood function will be maximized (\cite{Shalizi2012AdvancedDA}).
+
+\begin{equation}\label{eq:loglik}
+\ell(\beta_{0}, \beta) = \sum_{n}^{i=1}y_{i}log(p(x_{i})) + (1-y_{i})log(1 - p(x_{i}))
+\end{equation}
+
+In Equation~\ref{eq:loglik} the features are captured by the $x_{i}$ values and each class is represented by a $y_{i}$. At this stage a "penalty" can be added to the classification in an effort to promote sparsity in the model. In the work presented here an L1 penalty is used as defined in Equation~\ref{eq:l1}.
+
+\begin{equation}\label{eq:l1}
+\ell^{*}(\beta_{0}, \beta) = \ell\beta_{0}, \beta) - \lambda\sum_{n}^{i=1}\left \| \beta_{i} \right \|
+\end{equation}
+
+Following this penalty, the derivative of the likelihood function is solved numerically to find the maximum likelihood predictions for each class. Overall, logistic regression draws a linear decision boundary between classes and is a unique linear classifier in that the probability of predicting either class depends the proximity to the boundary (\cite{Shalizi2012AdvancedDA}).
+
+\subsubsection{K-nearest Neighbors}
+The K-nearest Neighbors classification method aims to classify data points by determining the proximity of the data point in the data space to a predefined number of training samples. The proximity is then used to classify the data point by a plurality vote. The number of clusters to create in the training set is set by the implementer. The algorithm is simple in nature compared to others profiled in this work, but has achieved success in many problem contexts especially in situations that have irregular decision boundaries.
+
+\subsubsection{Classifier Performance Metrics}\label{classIntro}
+In assessing the performance of the classification algorithms confusion matrices and Receiver Operating Characteristic Curves will be used.
+
+A confusion matrix for a classification problems simply indicates the frequency of correct and erroneous class predictions in the test data. The counts indicate how often a class is predicted as itself or if it is frequently misclassified as another class. This is important information in assessing the performance and thus suitability of the classification model.
+
+A Receiver Operating Characteristics (ROC) curve is a plot of False Positive Rate (FPR) versus True Positive Rate (TPR) for the classification of a given data class. These rates can be calculated using a macro-average strategy where the metric will be determined independently for each class before taking the average, or with a micro-average which instead collects all the contributions regardless of class before calculating the average FPR and TPR. In the case where a class imbalance may exist, the micro-average is the preferred method for calculating the ROC curve as it will not all the contributions of one class to disproportionately skew the curve trajectory. The ROC curve is a probability curve that indicates the relationship between the distributions of true positive and true of negative classifications. The area under the curve (AUC) is thus a measure of the degree of separability between a positive and negative classification.
+
+% Algorithm Implementation and Development
+\section{Algorithm Implementation and Development}
+\subsection{SVD Face Data Analysis}
+The main steps of the algorithm are as follows: 
+\begin{enumerate}
+    \item Input the face image files by iterating through file directory, prepare for analysis
+    \item Flatten each image into single array, concatenate all images together
+    \item Compute SVD of flattened image data set, visualize top modes, estimate dimensionality
+    \item Project onto the left singular vectors, compare reconstructed images to originals
+\end{enumerate}
+
+\subsection{Music Genre Classification}
+The main steps of the algorithm are as follows: 
+\begin{enumerate}
+    \item Input .wav music files, slice into 5 second sections, label for classification
+    \item Split music samples into training and testing data sets
+    \item Implement LDA, Logistic Regression, and K-Nearest Neighbors classification methods
+    \item Investigate classifier performance using confusion matrix and ROC curve
+\end{enumerate}
+
+% Computational Results
+\section{Computational Results}
+\subsection{SVD Face Data Analysis}
+The computational results in this section are a result of performing an SVD analysis of the cropped (Figure~\ref{fig:cropped}) and uncropped (Figure~\ref{fig:uncropped}) Yale face images. The interpretation of the the left singular vectors of the U matrix are the principal reconstruction axes of the image data and the $\Sigma$ values are the scalings of these axes. The right singular vectors of V apply rotation back into the original axes for the rank reduced reconstructions. The rank of the face space for the cropped Yale faces appears to be rank 4 based on Figure~\ref{fig:peCrop}. The rank of the uncropped face space appears to similarly be approximately 4 based on the top modes shown in Figure~\ref{fig:peUCrop}.
+\begin{figure*}[t]
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Figures/HW4_DanielBurnham_3_1.png}
+        \caption{}  
+        \label{fig:peCrop}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.5\textwidth}  
+        \centering 
+        \includegraphics[width=\textwidth]{Figures/HW4_DanielBurnham_3_2.png}
+        \caption{}
+        \label{fig:sigValCrop}
+    \end{subfigure}
+    \vskip\baselineskip
+    \begin{subfigure}[b]{0.475\textwidth}   
+        \centering 
+        \includegraphics[width=\textwidth]{Figures/HW4_DanielBurnham_3_3.png}
+        \caption{}
+        \label{fig:logECrop}
+    \end{subfigure}
+    \quad
+    \begin{subfigure}[b]{0.475\textwidth}   
+        \centering 
+        \includegraphics[width=\textwidth]{Figures/HW4_DanielBurnham_4_0.png}
+        \caption{}
+        \label{fig:facesCrop}
+    \end{subfigure}
+    \caption{\small (a) The percentage of energy captured by each SVD mode. (b) Magnitudes of the singular values (c) Log energy of each SVD mode (d) Reconstructed faces with increasing ranks} 
+    \label{fig:cropped}
+\end{figure*}
+
+\begin{figure*}[t]
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Figures/HW4_DanielBurnham_6_1.png}
+        \caption{}
+        \label{fig:peUCrop}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.5\textwidth}  
+        \centering 
+        \includegraphics[width=\textwidth]{Figures/HW4_DanielBurnham_6_2.png}
+        \caption{}
+        \label{fig:sigValUCrop}
+    \end{subfigure}
+    \vskip\baselineskip
+    \begin{subfigure}[b]{0.475\textwidth}   
+        \centering 
+        \includegraphics[width=\textwidth]{Figures/HW4_DanielBurnham_6_3.png}
+        \caption{}
+        \label{fig:logEUCrop}
+    \end{subfigure}
+    \quad
+    \begin{subfigure}[b]{0.475\textwidth}   
+        \centering 
+        \includegraphics[width=\textwidth]{Figures/HW4_DanielBurnham_7_0.png}
+        \caption{}
+        \label{fig:facesUCrop}
+    \end{subfigure}
+    \caption{\small (a) The percentage of energy captured by each SVD mode. (b) Magnitudes of the singular values (c) Log energy of each SVD mode (d) Reconstructed faces with increasing ranks}
+    \label{fig:uncropped}
+\end{figure*}
+
+\subsection{Music Genre Classification}
+\subsubsection{(test 1) Band Classification} 
+Three different bands were considered: Flume, Snoh Aalegra, and Tame Impala. The LDA classifier presented in the body of this report performed well on the simple band classification task with accuracy score: 0.925824, Precision: 0.926716, Recall: 0.925824. and F1 score: 0.925916. Figure~\ref{fig:LDAtest1} shows the confusion matrix counts with the most common erroneous classifications occurring between the Flume and Snoh Aalegra classes.
+\begin{figure}
+\centering
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_12_3.png}
+   \end{subfigure}
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_12_1.png}
+   \end{subfigure}
+\caption{Test 1: (Left) Confusion matrix indicating predicted class counts for LDA classifier. (Right) Receiver Operating Characteristic (ROC) curve for LDA classifier.} \label{fig:LDAtest1}
+\end{figure}
+\subsubsection{(test 2) Same Genre Band Classification}
+The genre chosen of early to mid 1900s jazz was chosen for this test case with specific artists: Louis Armstrong, Miles Davis, Duke Ellington, and John Coltrane. The LDA classifier again performed well on the jazz artist classification task with accuracy score: 0.958084, Precision: 0.958332, Recall: 0.958084, and F1 score: 0.958125. Figure~\ref{fig:LDAtest2} shows the confusion matrix counts with the most common erroneous classifications occurring between the John Coltrane and Miles Davis classes.
+\begin{figure}
+\centering
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_15_3.png}
+   \end{subfigure}
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_15_1.png}
+   \end{subfigure}
+\caption{Test 2: (Left) Confusion matrix indicating predicted class counts for LDA classifier. (Right) Receiver Operating Characteristic (ROC) curve for LDA classifier.} \label{fig:LDAtest2}
+\end{figure}
+\subsubsection{(test 3) Genre Classification}
+Music clips were taken from the genres of jazz, rock, classical, and electronic. The LDA classifier performed adequately on the genre discrimination task with accuracy score: 0.899510, Precision: 0.907349, Recall: 0.899510, and F1 score: 0.899538. Figure~\ref{fig:LDAtest3} shows the confusion matrix counts with the most common erroneous classifications occurring between the jazz and classical music classes.
+\begin{figure}
+\centering
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_18_3.png}
+   \end{subfigure}
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_18_1.png}
+   \end{subfigure}
+\caption{Test 3: (Left) Confusion matrix indicating predicted class counts for LDA classifier. (Right) Receiver Operating Characteristic (ROC) curve for LDA classifier.} \label{fig:LDAtest3}
+\end{figure}
+
+% Summary and Conclusions
+\section{Summary and Conclusions}
+\subsection{SVD Face Data Analysis}
+Two significant results emerged from the face image SVD processing task. First, face image data can be adequately represented with rank 4 approximations. Second, the cropping of the face images is an important preprocessing/collection step for ensuring successful low rank image reconstructions. The misalignment of faces in each uncropped image contributed to significant differences in the low rank reconstructions (Figure~\ref{fig:facesCrop} vs Figure~\ref{fig:facesUCrop}) generated through SVD. This is most assuredly due to increased noise in the data attributable to face orientation/position variability in each image frame.
+
+\subsection{Music Classification}Overall a music data sampling and processing pipeline was successfully constructed capable of taking raw sound files, chopping songs into 5 second clips and concatenating this data into a complete data set for classification. Three difference classification algorithms were explored for each test case: LDA, Logistic Regression, and K-Nearest Neighbors classifiers. All were largely successful with the most notable exception being the K-Nearest Neighbors classifier out performing LDA and Logistic Regression on test 3 for genre classification (Figure~\ref{fig:KNtest3}). This is most likely due to the K-Nearest Neighbors classifier being more adaptable to non-linear decision boundaries.
+
+% References
+\printbibliography
+
+% Appendices
+\begin{appendices}
+
+% Python Functions
+\section{Python Functions}
+\begin{itemize}
+    \item \texttt{numpy.linalg.svd(a, full\_matrices=True, compute\_uv=True, hermitian=False)}\\ 
+    Singular Value Decomposition.
+    \item \texttt{numpy.fft.fft2(a, s=None, axes=(-2, -1), norm=None)}\\ Compute the 2-dimensional discrete Fourier Transform.
+    This function computes the n-dimensional discrete Fourier Transform over any axes in an M-dimensional array by means of the Fast Fourier Transform (FFT). By default, the transform is computed over the last two axes of the input array, i.e., a 2-dimensional FFT.
+    \item \texttt{numpy.amax(a, axis=None, out=None, keepdims=<no value>, initial=<no value>, where=<no value>)} \\
+    Return the maximum of an array or maximum along an axis.
+    \item \texttt{skimage.filters.threshold\_otsu(image, nbins=256)}\\ Return threshold value based on Otsu’s method.
+    \item \texttt{sklearn.discriminant\_analysis.LinearDiscriminantAnalysis(solver='svd', shrinkage=None, priors=None, n\_components=None, store\_covariance=False, tol=0.0001)}\\
+    Linear Discriminant Analysis. A classifier with a linear decision boundary, generated by fitting class conditional densities to the data and using Bayes’ rule. The model fits a Gaussian density to each class, assuming that all classes share the same covariance matrix. The fitted model can also be used to reduce the dimensionality of the input by projecting it to the most discriminative directions.
+    \item \texttt{sklearn.linear\_model.LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, fit\_intercept=True, intercept\_scaling=1, class\_weight=None, random\_state=None, solver='lbfgs', max\_iter=100, multi\_class='auto', verbose=0, warm\_start=False, n\_jobs=None, l1\_ratio=None)}\\
+    Logistic Regression (aka logit, MaxEnt) classifier.
+    \item \texttt{sklearn.neighbors.KNeighborsClassifier(n\_neighbors=5, weights='uniform', algorithm='auto', leaf\_size=30, p=2, metric='minkowski', metric\_params=None, n\_jobs=None, **kwargs)}\\
+    Classifier implementing the k-nearest neighbors vote.
+    \item \texttt{sklearn.metrics.roc\_auc\_score(y\_true, y\_score, average='macro', sample\_weight=None, max\_fpr=None, multi\_class='raise', labels=None)}\\
+    Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC) from prediction scores. This implementation can be used with binary, multiclass and multilabel classification, but some restrictions apply (see Parameters).
+    
+\label{itemize:functions}
+\end{itemize}
+
+\newpage
+\section{Supplemental Figures}
+\begin{figure}[h]
+\centering
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_12_6.png}
+   \end{subfigure}
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_12_5.png}
+   \end{subfigure}
+\caption{Test 1: (Left) Confusion matrix indicating predicted class counts for logistic regression classifier. (Right) Receiver Operating Characteristic (ROC) curve for Logistic Regression classifier.} \label{fig:LRtest1}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_12_9.png}
+   \end{subfigure}
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_12_8.png}
+   \end{subfigure}
+\caption{Test 1: (Left) Confusion matrix indicating predicted class counts for K-Nearest Neighbors classifier. (Right) Receiver Operating Characteristic (ROC) curve for K-Nearest Neighbors classifier.} \label{fig:KNtest1}
+\end{figure}
+
+\begin{figure}
+\centering
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_15_6.png}
+   \end{subfigure}
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_15_5.png}
+   \end{subfigure}
+\caption{Test 2: (Left) Confusion matrix indicating predicted class counts for logistic regression classifier. (Right) Receiver Operating Characteristic (ROC) curve for Logistic Regression classifier.} \label{fig:LRtest2}
+\end{figure}
+\newpage
+
+\begin{figure}[h]
+\centering
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_15_9.png}
+   \end{subfigure}
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_15_8.png}
+   \end{subfigure}
+\caption{Test 2: (Left) Confusion matrix indicating predicted class counts for logistic regression classifier. (Right) Receiver Operating Characteristic (ROC) curve for K-Nearest Neighbors classifier.} \label{fig:KNtest2}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_18_6.png}
+   \end{subfigure}
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_18_5.png}
+   \end{subfigure}
+\caption{Test 3: (Left) Confusion matrix indicating predicted class counts for logistic regression classifier. (Right) Receiver Operating Characteristic (ROC) curve for Logistic Regression classifier.} \label{fig:LRtest3}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_18_9.png}
+   \end{subfigure}
+   \begin{subfigure}{0.49\linewidth} \centering
+     \includegraphics[scale=0.5]{Figures/HW4_DanielBurnham_18_8.png}
+   \end{subfigure}
+\caption{Test 3: (Left) Confusion matrix indicating predicted class counts for logistic regression classifier. (Right) Receiver Operating Characteristic (ROC) curve for K-Nearest Neighbors classifier.} \label{fig:KNtest3}
+\end{figure}
+\label{appendix:figures}
+
+\newpage
+% Python Code
+\section{Python Code}
+\inputminted[fontsize=\scriptsize]{python}{HW4_DanielBurnham.py}
+\label{appendix:code}
+
+\end{appendices}
+
+\end{document}
